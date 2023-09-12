@@ -3,7 +3,7 @@ import json
 import copy
 import random as rand
 
-catagories = {1:"cha",2:"con",3:"dex",4:"int",5:"str",6:"wis"}
+catagories = {0:"cha",1:"con",2:"dex",3:"int",4:"str",5:"wis"}
 
 character = {
     "name":"placeholder",
@@ -28,32 +28,51 @@ def gen_stats(stats=[]):
     else:
         return gen_stats(stats)
 
-aval_stats = gen_stats()
-while len(aval_stats) > 0:
-    
-    print("\nAvalible stats:",aval_stats)
-    print("Your current stats:",character["stats"],"\n")
-    x = input("Please allocate "+ str(aval_stats[0])+": ")
+def get_desc(topic):
+    r = requests.get("https://www.dnd5eapi.co/api/ability-scores/"+topic, headers={"Accept": "application/json"})
+    desc = r.json()["desc"]
+    for x in desc:
+        print(x)
 
-    if x.isdigit():
-        x = int(x)
 
-    elif x.lower() == "r" or x.lower() == "reroll" :
-        check = input("Are you sure you want to reroll? ")
-        if check.lower() == "y" or check.lower() == "yes":
-            for x in catagories:
-                character["stats"][catagories[x]] = 0
-            aval_stats = gen_stats()
-        continue
+def allocate_stats(aval_stats):
+    while len(aval_stats) > 0:
+        
+        print("\nAvalible stats:",aval_stats)
+        print("Your current stats:",character["stats"],"\n")
+        x = input("Please allocate "+ str(aval_stats[0])+": ")
 
-    else:
-        print("\nPlease enter valid value:",catagories,"\n")
-        continue
+        if x.isdigit():
+            x = int(x)
 
-    if x in catagories:
-        if character["stats"][catagories[x]] > 0:
-            aval_stats.append(character["stats"][catagories[x]])
-        character["stats"][catagories[x]] = aval_stats.pop(0)
+        elif x.lower() == "r" or x.lower() == "reroll" :
+            check = input("Are you sure you want to reroll? ")
+            if check.lower() == "y" or check.lower() == "yes":
+                for x in catagories:
+                    character["stats"][catagories[x]] = 0
+                aval_stats = gen_stats()
+            continue
+        
+        elif x[0].isdigit() and x.endswith("?"):
+            lookup = int(x[0])
+            if not lookup in catagories:
+                continue
+            get_desc(catagories[lookup])
+
+        elif x.lower() in list(character["stats"].keys()):
+            x = list(catagories.values()).index(x.lower())
+            print(x)
+        
+        else:
+            print("\nPlease enter valid value:",catagories,"\n")
+            continue
+
+        if x in catagories:
+            if character["stats"][catagories[x]] > 0:
+                aval_stats.append(character["stats"][catagories[x]])
+            character["stats"][catagories[x]] = aval_stats.pop(0)
+
+allocate_stats(gen_stats())
 
 #with open("test.json","w") as file:
 #    file.write(json.dumps(character, indent=4))
