@@ -9,11 +9,16 @@ character = {
     "name":"placeholder",
     "stats": {"cha":0,"con":0,"dex":0,"int":0,"str":0,"wis":0},
     "alignment": "neutral",
-    "languages": "common",
-    "race":"human"
+    "background": "none",
+    "features": [],
+    "personality_traits": [],
+    "languages": [],
+    "race":"human",
+    "ideals": [],
+    "bonds": [],
+    "flaws": []
 }
 
-#character["name"] = input("Please enter your characters name: ")
 
 #Generates stat array
 def gen_stats(stats=[]):
@@ -30,12 +35,14 @@ def gen_stats(stats=[]):
     else:
         return gen_stats(stats)
 
-def get_desc(topic):
-    r = requests.get("https://www.dnd5eapi.co/api/ability-scores/"+topic, headers={"Accept": "application/json"})
+def print_desc(topic):
+    r = requests.get("https://www.dnd5eapi.co"+topic, headers={"Accept": "application/json"})
     desc = r.json()["desc"]
-    for x in desc:
-        print(x)
-
+    if type(desc) == list:
+        for x in desc:
+            print(x+"\n")
+    else:
+        print(desc)
 
 def allocate_stats(aval_stats):
     while len(aval_stats) > 0:
@@ -59,7 +66,7 @@ def allocate_stats(aval_stats):
             lookup = int(x[0])
             if not lookup in catagories:
                 continue
-            get_desc(catagories[lookup])
+            print_desc("/api/ability-scores/"+catagories[lookup])
 
         elif x.lower() in list(character["stats"].keys()):
             x = list(catagories.values()).index(x.lower())
@@ -87,21 +94,33 @@ def set_alignment():
         indexes.append(result["index"])
     
     while True: 
-        for x in names:
+        for x in range(len(names)):
             print(x,":",names[x])
         
         choice = input()
-        
-        if choice.lower() in names:
-            character["alignment"] = indexes[names.index(choice.lower())]
-        elif choice.isdigit() and int(choice) in range(len(names)):
-            character["alignment"] = indexes[int(choice)]
-        elif choice.lower() in abbr:
-            character["alignment"] = indexes[abbr.index(choice.lower())]
-        else:
+
+        if choice.endswith("?"):
+            choice = choice[:-1]
+            if choice.lower() in names:
+                print_desc("/api/alignments/"+indexes[names.index(choice.lower())])
+            elif choice.isdigit() and int(choice) in range(len(names)):
+                print_desc("/api/alignments/"+indexes[int(choice)])
+            elif choice.lower() in abbr:
+                print_desc("/api/alignments/"+indexes[abbr.index(choice.lower())])
             continue
+        else:
+            if choice.lower() in names:
+                character["alignment"] = indexes[names.index(choice.lower())]
+            elif choice.isdigit() and int(choice) in range(len(names)):
+                character["alignment"] = indexes[int(choice)]
+            elif choice.lower() in abbr:
+                character["alignment"] = indexes[abbr.index(choice.lower())]
+            else:
+                continue
         break
 
+
+#character["name"] = input("Please enter your characters name: ")
 #allocate_stats(gen_stats())
 set_alignment()
 
