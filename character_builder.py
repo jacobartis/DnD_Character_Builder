@@ -8,12 +8,16 @@ catagories = {0:"cha",1:"con",2:"dex",3:"int",4:"str",5:"wis"}
 character = {
     "name":"placeholder",
     "stats": {"cha":0,"con":0,"dex":0,"int":0,"str":0,"wis":0},
+    "race":"human",
     "alignment": "neutral",
     "background": "none",
+    "speed": 0,
     "features": [],
-    "personality_traits": [],
+    "proficiencies": [],
+    "traits": [],
     "languages": [],
-    "race":"human",
+    "skills": [],
+    "personality_traits": [],
     "ideals": [],
     "bonds": [],
     "flaws": []
@@ -119,10 +123,55 @@ def set_alignment():
                 continue
         break
 
+def set_race():
+    races = requests.get("https://www.dnd5eapi.co/api/races", headers={"Accept": "application/json"})
+    race_names = []
+    race_urls = []
+    
+    for r in races.json()["results"]:
+        
+        result = requests.get("https://www.dnd5eapi.co"+r["url"], headers={"Accept": "application/json"}).json()
+        race_names.append(result["name"].lower())
+        race_urls.append(result["url"])
+        if len(result["subraces"]):
+            for sr in result["subraces"]:
+                race_names.append(sr["name"].lower())
+                race_urls.append(sr["url"])
+
+    while True: 
+        print(race_urls)
+        choice = input("Please select a race: ").lower()
+        if choice in race_names:
+            character["race"] = race_urls[race_names.index(choice)]
+            break
+    
+    if "subraces" in character["race"]:
+        selected_subrace = requests.get("https://www.dnd5eapi.co"+character["race"], headers={"Accept": "application/json"}).json()
+        selected_race = requests.get("https://www.dnd5eapi.co"+selected_subrace["race"]["url"], headers={"Accept": "application/json"}).json()
+    else:
+        selected_race = requests.get("https://www.dnd5eapi.co"+character["race"], headers={"Accept": "application/json"}).json()
+    print(selected_race)
+    
+    character["speed"] = selected_race["speed"]
+    
+    if selected_subrace:
+        for ab in selected_subrace["ability_bonuses"]:
+            character["stats"][ab["ability_score"]["index"]] += ab["bonus"]
+        character["proficiencies"].extend(selected_subrace["starting_proficiencies"])
+    else:
+        for ab in selected_race["ability_bonuses"]:
+            character["stats"][ab["ability_score"]["index"]] += ab["bonus"]
+        character["proficiencies"].extend(selected_race["starting_proficiencies"])
+    character["traits"].extend(selected_race["traits"])
+    character["languages"].extend(selected_race["languages"])
+    #Need starting profs
+    #Need to finish sub races
+    
 
 #character["name"] = input("Please enter your characters name: ")
 #allocate_stats(gen_stats())
-set_alignment()
+#set_alignment()
+set_race()
 
 with open("test.json","w") as file:
     file.write(json.dumps(character, indent=4))
