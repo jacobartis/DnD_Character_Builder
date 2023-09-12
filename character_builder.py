@@ -8,6 +8,8 @@ catagories = {0:"cha",1:"con",2:"dex",3:"int",4:"str",5:"wis"}
 character = {
     "name":"placeholder",
     "stats": {"cha":0,"con":0,"dex":0,"int":0,"str":0,"wis":0},
+    "alignment": "neutral",
+    "languages": "common",
     "race":"human"
 }
 
@@ -72,10 +74,39 @@ def allocate_stats(aval_stats):
                 aval_stats.append(character["stats"][catagories[x]])
             character["stats"][catagories[x]] = aval_stats.pop(0)
 
-allocate_stats(gen_stats())
+def set_alignment():
+    print("\nPlease select an alignment")
+    alignments = requests.get("https://www.dnd5eapi.co/api/alignments", headers={"Accept": "application/json"})
+    names = []
+    abbr = []
+    indexes = []
+    for x in range(len(alignments.json()["results"])):
+        result = alignments.json()["results"][x]
+        names.append(result["name"].lower())
+        abbr.append(requests.get("https://www.dnd5eapi.co"+result["url"], headers={"Accept": "application/json"}).json()["abbreviation"].lower())
+        indexes.append(result["index"])
+    
+    while True: 
+        for x in names:
+            print(x,":",names[x])
+        
+        choice = input()
+        
+        if choice.lower() in names:
+            character["alignment"] = indexes[names.index(choice.lower())]
+        elif choice.isdigit() and int(choice) in range(len(names)):
+            character["alignment"] = indexes[int(choice)]
+        elif choice.lower() in abbr:
+            character["alignment"] = indexes[abbr.index(choice.lower())]
+        else:
+            continue
+        break
 
-#with open("test.json","w") as file:
-#    file.write(json.dumps(character, indent=4))
+#allocate_stats(gen_stats())
+set_alignment()
 
-r = requests.get("https://www.dnd5eapi.co/api/ability-scores/con", headers={"Accept": "application/json"})
-print(r.json()["index"])
+with open("test.json","w") as file:
+    file.write(json.dumps(character, indent=4))
+
+#r = requests.get("https://www.dnd5eapi.co/api/ability-scores/con", headers={"Accept": "application/json"})
+#print(r.json()["index"])

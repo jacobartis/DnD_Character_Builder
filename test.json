@@ -1,0 +1,14 @@
+{
+    "name": "placeholder",
+    "stats": {
+        "cha": 0,
+        "con": 0,
+        "dex": 0,
+        "int": 0,
+        "str": 0,
+        "wis": 0
+    },
+    "alignment": "chaotic-neutral",
+    "languages": "common",
+    "race": "human"
+}
